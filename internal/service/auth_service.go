@@ -98,6 +98,8 @@ func (svc *RestService) OAuthCalback(c *gin.Context) {
 
 	// login session is still valid
 	// exchange the provided code for an AccessToken with the ID provider
+	// this is just an internal Access Token to be used for accessing the
+	// ID providers resources, for synching the users infos, DO NOT USE FOR APP AUTH
 	config := OAuth.getOAuthConfig()
 	oauthToken, err := config.Exchange(context.Background(), code, oauth2.VerifierOption(token.Verifier))
 	if err != nil {
@@ -105,10 +107,6 @@ func (svc *RestService) OAuthCalback(c *gin.Context) {
 		c.Redirect(http.StatusTemporaryRedirect, system.CLIENT_URL+"/auth?error=unauthorized")
 		return
 	}
-
-	slog.Debug("CALBACK: exchanged CODE for USER TOKENS")
-	slog.Debug(fmt.Sprintf("%v", oauthToken.AccessToken))
-	slog.Debug("")
 
 	// use the provided oauthtoken to get user information from ID provider
 	userInfo, err := OAuth.getUserInfo(oauthToken.AccessToken)
@@ -118,6 +116,7 @@ func (svc *RestService) OAuthCalback(c *gin.Context) {
 		return
 	}
 
+	slog.Debug(oauthToken.AccessToken)
 	slog.Debug("CALLBACK: gotten USERINFO from ACCESS TOKEN")
 	slog.Debug(userInfo.email, userInfo.sub)
 	slog.Debug("")
