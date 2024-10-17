@@ -1,0 +1,7 @@
+# files
+.envrc
+.vscode
+.git
+
+# data directories
+data
