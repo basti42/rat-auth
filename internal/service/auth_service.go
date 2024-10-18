@@ -46,7 +46,7 @@ func (svc *RestService) OauthLogin(c *gin.Context) {
 	// expiration date == length of login typing session
 	// (how long can the user input their creds, before the sessoin expires)
 	// set to 1 minute for now
-	loginSessionToken, err := svc.repo.InsertToken(time.Now().Add(10*time.Minute).Format(time.RFC3339), "", state, verifier, "", models.LoginSessionToken)
+	_, err = svc.repo.InsertToken(time.Now().Add(10*time.Minute).Format(time.RFC3339), "", state, verifier, "", models.LoginSessionToken)
 	if err != nil {
 		slog.Error("Error inserting token", "insertToken", err)
 		c.Redirect(http.StatusTemporaryRedirect, system.CLIENT_URL+"/auth?error=unauthorized")
@@ -54,9 +54,6 @@ func (svc *RestService) OauthLogin(c *gin.Context) {
 	}
 	// Redirect user to consent page and ask for permission
 	url := OAuth.GetOAuthConfig().AuthCodeURL(state, oauth2.AccessTypeOffline, oauth2.S256ChallengeOption(verifier))
-
-	slog.Debug(fmt.Sprintf("stored dummy token for verification: %v", loginSessionToken))
-	slog.Debug(fmt.Sprintf("url for social login: %v", url))
 
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
@@ -93,8 +90,6 @@ func (svc *RestService) OAuthCallback(c *gin.Context) {
 		return
 	}
 
-	slog.Debug("CALLBACK: successfully found found initial token for STATE and VERIFIER")
-
 	// login session is still valid
 	// exchange the provided code for an AccessToken with the ID provider
 	// this is just an internal Access Token to be used for accessing the
@@ -115,16 +110,10 @@ func (svc *RestService) OAuthCallback(c *gin.Context) {
 		return
 	}
 
-	slog.Debug(oauthToken.AccessToken)
-	slog.Debug("CALLBACK: gotten USERINFO from ACCESS TOKEN")
-	slog.Debug(userInfo.Email, userInfo.Sub)
-	slog.Debug("")
-
 	// email is the unique identifier. Use forom userInfo.Email
 	// store the user if it doesn't exist already
 	user, err := svc.repo.GetUserByEmail(userInfo.Email)
 	if err != nil {
-		slog.Debug("CALLBACK: SUB as EMAIL not found in USERS DB, creating a new user")
 		// user with this email does not exist
 		// create a new user
 		sub := provider + ":" + userInfo.Sub
@@ -136,10 +125,6 @@ func (svc *RestService) OAuthCallback(c *gin.Context) {
 		}
 	}
 
-	slog.Debug("CALLBACK: user created for SUB by unique EMAIL")
-	slog.Debug(user.Id, user.Email)
-	slog.Debug("")
-
 	exchangeCode := oauth2.GenerateVerifier()
 
 	// create auth token with a 10 seconds expiration
@@ -150,14 +135,7 @@ func (svc *RestService) OAuthCallback(c *gin.Context) {
 		return
 	}
 
-	slog.Debug("CALLBACK: created token with 10sec Expiration Date")
-	slog.Debug(fmt.Sprintf("%v", exchangeSessionToken))
-	slog.Debug("")
-
-	slog.Debug("CALLBACK: redirecting to CLIENT_URL including token_id")
-
 	// redirect to home page
-	// TODO create proper jwt token
 	// this token_id is used only temporary,
 	// once the client server receives it, it can exchange it for a
 	// proper AccessToken using a different auth-service-url, which then

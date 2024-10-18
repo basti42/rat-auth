@@ -3,7 +3,6 @@ package providers
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/basti42/rat-auth-service/internal/models"
@@ -43,30 +42,22 @@ func (g *OAuthGithub) GetUserInfo(accessToken string) (*models.UserInfo, error) 
 		return nil, fmt.Errorf("http call: %v", err)
 	}
 
-	slog.Debug("RAW USER INFO from github:")
-	slog.Debug("%v", userInfo)
-	slog.Debug("")
-
 	userId, ok := userInfo["id"].(float64)
 	if !ok {
 		return nil, fmt.Errorf("Invalid user id")
 	}
-	slog.Debug(fmt.Sprintf("--> user id = %v", userId))
 
 	sub := fmt.Sprintf("%.0f", userId)
-	slog.Debug(fmt.Sprintf("--> sum = %v", sub))
 
 	email, ok := userInfo["email"].(string)
 	if !ok {
 		email = ""
 	}
-	slog.Debug(fmt.Sprintf("--> email = %v", email))
 
 	avatar, ok := userInfo["avatar_url"].(string)
 	if !ok {
 		avatar = ""
 	}
-	slog.Debug(fmt.Sprintf("--> avatar = %v", avatar))
 
 	return &models.UserInfo{
 		Email:  email,
