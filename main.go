@@ -15,14 +15,18 @@ func main() {
 	system.InitLogger()
 
 	db := repository.GetDBConnection()
-
 	app := internal.NewApplication(db)
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(
+		gin.LoggerWithWriter(gin.DefaultWriter, "/health"),
+		gin.Recovery(),
+	)
 
 	router.GET("/health", app.Health)
 	router.GET("/oauth/login/:provider", app.OauthLogin)
 	router.GET("/oauth/callback/:provider", app.OauthCallback)
+	router.GET("/oauth/exchange/:token_id", app.TokenExchange)
 
 	serviceName := system.SERVICE_NAME
 	port := system.PORT

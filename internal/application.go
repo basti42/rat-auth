@@ -1,7 +1,10 @@
 package internal
 
 import (
+	"fmt"
 	"net/http"
+
+	"log/slog"
 
 	"github.com/basti42/rat-auth-service/internal/service"
 	"github.com/gin-gonic/gin"
@@ -21,26 +24,19 @@ func (a *Application) Health(c *gin.Context) {
 }
 
 func (a *Application) OauthLogin(c *gin.Context) {
-	// provider := c.Param(("provider"))
-	// slog.Info(fmt.Sprintf("Received request for login via '%v'", provider))
-
-	// gothic.BeginAuthHandler(c.Writer, c.Request)
-
 	service.NewRestService(a.db).OauthLogin(c)
 }
 
 func (a *Application) OauthCallback(c *gin.Context) {
+	service.NewRestService(a.db).OAuthCallback(c)
+}
 
-	// user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
-	// if err != nil {
-	// 	slog.Error("error completing user authentication")
-	// 	c.AbortWithError(http.StatusBadRequest, errors.New("error completing user authentication"))
-	// 	return
-	// }
-	// slog.Info(user.UserID)
-	// slog.Info(user.AccessToken)
-	// slog.Info("")
-
-	// c.Redirect(http.StatusTemporaryRedirect, system.CLIENT_URL)
-	service.NewRestService(a.db).OAuthCalback(c)
+func (a *Application) TokenExchange(c *gin.Context) {
+	accessTokenResponse, err := service.NewRestService(a.db).TokenExchange(c)
+	if err != nil {
+		slog.Warn(fmt.Sprintf("error exchanging token_id with exchange_code for access token"))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, accessTokenResponse)
 }

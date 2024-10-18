@@ -43,17 +43,19 @@ func NewAuthRepo(db *gorm.DB) *AuthRepo {
 	return &AuthRepo{db: db}
 }
 
-func (repo *AuthRepo) InsertToken(expires, userid, state, verifier string) (*models.Token, error) {
+func (repo *AuthRepo) InsertToken(expires, userid, state, verifier, exchangeCode string, tokenType models.TokenType) (*models.Token, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
 	token := models.Token{
-		Id:       id.String(),
-		Expires:  expires,
-		UserId:   userid,
-		State:    state,
-		Verifier: verifier,
+		Id:           id.String(),
+		Expires:      expires,
+		UserId:       userid,
+		State:        state,
+		Verifier:     verifier,
+		ExchangeCode: exchangeCode,
+		Type:         tokenType,
 	}
 	tx := repo.db.Create(&token)
 	if tx.Error != nil {
@@ -65,6 +67,17 @@ func (repo *AuthRepo) InsertToken(expires, userid, state, verifier string) (*mod
 func (repo *AuthRepo) GetTokenByState(state string) (*models.Token, error) {
 	var token models.Token
 	tx := repo.db.Model(&models.Token{}).Where("state = ?", state).First(&token)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return &token, nil
+}
+
+func (repo *AuthRepo) GetTokenByIdExchangeCode(uuid uuid.UUID, exchangeCode string) (*models.Token, error) {
+	var token models.Token
+	tx := repo.db.Model(&models.Token{}).
+		Where("id = ? AND exchange_code = ?", uuid, exchangeCode).
+		First(&token)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

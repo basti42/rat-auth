@@ -1,4 +1,4 @@
-package service
+package providers
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/basti42/rat-auth-service/internal/models"
 	"github.com/basti42/rat-auth-service/internal/system"
 	"golang.org/x/oauth2"
 )
@@ -21,27 +22,21 @@ var githubOAuthConfig = oauth2.Config{
 	Scopes:      []string{"user:email"},
 }
 
-type UserInfo struct {
-	email  string
-	sub    string
-	avatar string
-}
-
 type OAuthGithub struct {
 	githubOAuthConfig oauth2.Config
 }
 
-func newOAuthGithub() *OAuthGithub {
+func NewOAuthGithub() *OAuthGithub {
 	return &OAuthGithub{
 		githubOAuthConfig: githubOAuthConfig,
 	}
 }
 
-func (g *OAuthGithub) getOAuthConfig() *oauth2.Config {
+func (g *OAuthGithub) GetOAuthConfig() *oauth2.Config {
 	return &g.githubOAuthConfig
 }
 
-func (g *OAuthGithub) getUserInfo(accessToken string) (*UserInfo, error) {
+func (g *OAuthGithub) GetUserInfo(accessToken string) (*models.UserInfo, error) {
 	url := "https://api.github.com/user"
 	userInfo, err := makeHttpCall("GET", url, accessToken)
 	if err != nil {
@@ -73,10 +68,10 @@ func (g *OAuthGithub) getUserInfo(accessToken string) (*UserInfo, error) {
 	}
 	slog.Debug(fmt.Sprintf("--> avatar = %v", avatar))
 
-	return &UserInfo{
-		email:  email,
-		sub:    sub,
-		avatar: avatar,
+	return &models.UserInfo{
+		Email:  email,
+		Sub:    sub,
+		Avatar: avatar,
 	}, nil
 
 }
