@@ -35,7 +35,7 @@ func (a *Application) TokenExchange(c *gin.Context) {
 	accessTokenResponse, err := service.NewRestService(a.db).TokenExchange(c)
 	if err != nil {
 		slog.Warn(fmt.Sprintf("error exchanging token_id with exchange_code for access token"))
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, accessTokenResponse)
