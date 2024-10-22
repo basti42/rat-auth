@@ -2,25 +2,20 @@ package repository
 
 import (
 	"fmt"
-	"io/fs"
-	"os"
 
 	"log/slog"
 
 	"github.com/basti42/rat-auth-service/internal/models"
 	"github.com/basti42/rat-auth-service/internal/system"
 	"github.com/google/uuid"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func GetDBConnection() *gorm.DB {
-	if err := os.MkdirAll(system.DB_PATH, fs.ModePerm); err != nil {
-		msg := fmt.Sprintf("error creating auth db directory: %v", err)
-		slog.Error(msg)
-		panic(msg)
-	}
-	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("%v/auth.db", system.DB_PATH)), &gorm.Config{})
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		system.DB_HOST, system.DB_USER, system.DB_PASSWORD, system.DB_NAME, system.DB_PORT)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		msg := fmt.Sprintf("error creating auth db: %v", err)
 		slog.Error(msg)
