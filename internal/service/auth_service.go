@@ -112,12 +112,12 @@ func (svc *RestService) OAuthCallback(c *gin.Context) {
 
 	// email is the unique identifier. Use forom userInfo.Email
 	// store the user if it doesn't exist already
-	user, err := svc.repo.GetUserByEmail(userInfo.Email)
+	user, err := svc.repo.GetUserAccountByEmail(userInfo.Email)
 	if err != nil {
 		// user with this email does not exist
 		// create a new user
 		sub := provider + ":" + userInfo.Sub
-		user, err = svc.repo.CreateUser(userInfo.Email, sub, userInfo.Avatar)
+		user, err = svc.repo.CreateUserAccount(userInfo.Email, sub, userInfo.Avatar)
 		if err != nil {
 			slog.Error("Error inserting user", "insertUser", err)
 			c.Redirect(http.StatusTemporaryRedirect, system.CLIENT_URL+"/auth?error=unauthorized")
@@ -182,7 +182,7 @@ func (svc *RestService) TokenExchange(c *gin.Context) (models.TokenExchangeRespo
 		return models.TokenExchangeResponse{}, errors.New(msg)
 	}
 
-	user, err := svc.repo.GetUserByID(userUUID)
+	userAccount, err := svc.repo.GetUserAccountByID(userUUID)
 	if err != nil {
 		msg := fmt.Sprintf("no user found for exchange token='%v'", token.Id)
 		slog.Error(msg)
@@ -197,7 +197,7 @@ func (svc *RestService) TokenExchange(c *gin.Context) (models.TokenExchangeRespo
 		return models.TokenExchangeResponse{}, errors.New(msg)
 	}
 
-	jwt, err := accessToken.GenerateJWT(user)
+	jwt, err := accessToken.GenerateJWT(userAccount)
 	if err != nil {
 		msg := fmt.Sprintf("error generating JWT for access token='%v'", accessToken.Id)
 		slog.Error(msg)
@@ -206,6 +206,6 @@ func (svc *RestService) TokenExchange(c *gin.Context) (models.TokenExchangeRespo
 
 	return models.TokenExchangeResponse{
 		AccessToken: jwt,
-		User:        *user,
+		User:        *userAccount,
 	}, nil
 }

@@ -22,7 +22,7 @@ func GetDBConnection() *gorm.DB {
 		panic(msg)
 	}
 
-	if err = db.AutoMigrate(&models.Token{}, &models.User{}); err != nil {
+	if err = db.AutoMigrate(&models.Token{}, &models.Account{}, &models.Subscription{}); err != nil {
 		msg := fmt.Sprintf("error migrating auth db: %v", err)
 		slog.Error(msg)
 		panic(msg)
