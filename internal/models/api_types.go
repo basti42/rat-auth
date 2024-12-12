@@ -1,6 +1,6 @@
 package models
 
 type TokenExchangeResponse struct {
-	AccessToken string `json:"access_token"`
-	User        User   `json:"user"`
+	AccessToken string  `json:"access_token"`
+	User        Account `json:"user"`
 }
